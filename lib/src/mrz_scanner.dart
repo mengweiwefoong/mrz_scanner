@@ -10,10 +10,12 @@ class MRZScanner extends StatefulWidget {
     required this.onSuccess,
     this.initialDirection = CameraLensDirection.back,
     this.showOverlay = true,
+    this.onStart,
   }) : super(key: controller);
   final Function(MRZResult mrzResult, List<String> lines) onSuccess;
   final CameraLensDirection initialDirection;
   final bool showOverlay;
+  final Function? onStart;
   @override
   // ignore: library_private_types_in_public_api
   MRZScannerState createState() => MRZScannerState();
@@ -40,12 +42,14 @@ class MRZScannerState extends State<MRZScanner> {
       showOverlay: widget.showOverlay,
       initialDirection: widget.initialDirection,
       onImage: _processImage,
+      onStart: widget.onStart,
     );
   }
 
   void _parseScannedText(List<String> lines) {
     try {
       final data = MRZParser.parse(lines);
+      print('data : {$data}');
       _isBusy = true;
 
       widget.onSuccess(data, lines);
@@ -65,6 +69,7 @@ class MRZScannerState extends State<MRZScanner> {
     List allText = trimmedText.split('\n');
 
     List<String> ableToScanText = [];
+    //[P<MYSFOONG<MENG<WEI<<<<<<<<<<<<<<<<<<<<<<<<<, A540598951MYS9312317M2503066931231145983<<18]
     for (var e in allText) {
       if (MRZHelper.testTextLine(e).isNotEmpty) {
         ableToScanText.add(MRZHelper.testTextLine(e));
@@ -73,8 +78,10 @@ class MRZScannerState extends State<MRZScanner> {
     List<String>? result = MRZHelper.getFinalListToParse([...ableToScanText]);
 
     if (result != null) {
+      print(result);
       _parseScannedText([...result]);
     } else {
+      print('result null');
       _isBusy = false;
     }
   }

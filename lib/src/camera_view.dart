@@ -10,11 +10,13 @@ class MRZCameraView extends StatefulWidget {
     required this.onImage,
     this.initialDirection = CameraLensDirection.back,
     required this.showOverlay,
+    this.onStart,
   }) : super(key: key);
 
   final Function(InputImage inputImage) onImage;
   final CameraLensDirection initialDirection;
   final bool showOverlay;
+  final Function? onStart;
 
   @override
   _MRZCameraViewState createState() => _MRZCameraViewState();
@@ -28,10 +30,15 @@ class _MRZCameraViewState extends State<MRZCameraView> {
   @override
   void initState() {
     super.initState();
-    initCamera();
+    initCamera().then((value) async {
+      if (widget.onStart != null) {
+        await Future.delayed(Duration(milliseconds: 500));
+        widget.onStart!();
+      }
+    });
   }
 
-  initCamera() async {
+  Future initCamera() async {
     cameras = await availableCameras();
 
     try {
@@ -98,7 +105,7 @@ class _MRZCameraViewState extends State<MRZCameraView> {
         fit: StackFit.expand,
         children: <Widget>[
           Transform.scale(
-            scale: scale,
+            scale: 1,
             child: CameraPreview(_controller!),
           ),
         ],
@@ -108,11 +115,9 @@ class _MRZCameraViewState extends State<MRZCameraView> {
 
   Future _startLiveFeed() async {
     final camera = cameras[_cameraIndex];
-    _controller = CameraController(
-      camera,
-      ResolutionPreset.high,
-      enableAudio: false,
-    );
+    _controller = CameraController(camera, ResolutionPreset.high,
+        enableAudio: false, imageFormatGroup: ImageFormatGroup.nv21);
+
     _controller?.initialize().then((_) {
       if (!mounted) {
         return;
@@ -150,23 +155,24 @@ class _MRZCameraViewState extends State<MRZCameraView> {
 
     final planeData = image.planes.map(
       (Plane plane) {
-        return InputImagePlaneMetadata(
-          bytesPerRow: plane.bytesPerRow,
-          height: plane.height,
-          width: plane.width,
-        );
+        return InputImageMetadata(
+            bytesPerRow: plane.bytesPerRow,
+            size: Size((plane.width ?? 300).toDouble(),
+                (plane.height ?? 300).toDouble()),
+            format: inputImageFormat,
+            rotation: imageRotation);
       },
     ).toList();
 
-    final inputImageData = InputImageData(
+    final inputImageData = InputImageMetadata(
       size: imageSize,
-      imageRotation: imageRotation,
-      inputImageFormat: inputImageFormat,
-      planeData: planeData,
+      rotation: imageRotation,
+      format: inputImageFormat,
+      bytesPerRow: planeData.first.bytesPerRow,
     );
 
     final inputImage =
-        InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
+        InputImage.fromBytes(bytes: bytes, metadata: inputImageData);
 
     widget.onImage(inputImage);
   }

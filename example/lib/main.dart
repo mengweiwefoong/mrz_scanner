@@ -19,6 +19,10 @@ class _MyAppState extends State<MyApp> {
       home: Builder(builder: (context) {
         return MRZScanner(
           controller: controller,
+          showOverlay: true,
+          onStart: () {
+            print('MRZ Scanner Started');
+          },
           onSuccess: (mrzResult, lines) async {
             await showDialog(
               context: context,
@@ -36,12 +40,14 @@ class _MyAppState extends State<MyApp> {
                         },
                         child: const Text('Reset Scanning'),
                       ),
-                      Text('Name : ${mrzResult.givenNames}'),
+                      Text('Sur Name : ${mrzResult.surnames}'),
+                      Text('Given Name : ${mrzResult.givenNames}'),
                       Text('Gender : ${mrzResult.sex.name}'),
                       Text('CountryCode : ${mrzResult.countryCode}'),
                       Text('Date of Birth : ${mrzResult.birthDate}'),
                       Text('Expiry Date : ${mrzResult.expiryDate}'),
                       Text('DocNum : ${mrzResult.documentNumber}'),
+                      Text('PersonalNo : ${mrzResult.personalNumber}'),
                     ],
                   ),
                 ),
