@@ -69,7 +69,6 @@ class MRZScannerState extends State<MRZScanner> {
     List allText = trimmedText.split('\n');
 
     List<String> ableToScanText = [];
-    //[P<MYSFOONG<MENG<WEI<<<<<<<<<<<<<<<<<<<<<<<<<, A540598951MYS9312317M2503066931231145983<<18]
     for (var e in allText) {
       if (MRZHelper.testTextLine(e).isNotEmpty) {
         ableToScanText.add(MRZHelper.testTextLine(e));
